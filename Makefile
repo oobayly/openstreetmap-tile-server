@@ -31,7 +31,7 @@ serve:# build
 	-v osm-data:/data/database/ \
 	-v osm-tiles:/data/tiles/ \
 	-e ALLOW_CORS=enabled \
-	${DOCKER_IMAGE} \
+	-d ${DOCKER_IMAGE} \
 	run
 
 stop:
