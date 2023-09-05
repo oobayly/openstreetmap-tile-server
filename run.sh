@@ -15,7 +15,7 @@ function setPostgresPassword() {
 if [ "$#" -ne 1 ]; then
     echo "usage: <import|run>"
     echo "commands:"
-    echo "    import: Set up the database and import /data/region.osm.pbf"
+    echo "    import: Set up the database and import /data/region.osm"
     echo "    run: Runs Apache and renderd to serve tiles at /tile/{z}/{x}/{y}.png"
     echo "environment variables:"
     echo "    THREADS: defines number of threads used for importing / tile rendering"
@@ -60,25 +60,14 @@ if [ "$1" == "import" ]; then
     sudo -u postgres psql -d gis -c "ALTER TABLE spatial_ref_sys OWNER TO renderer;"
     setPostgresPassword
 
-    # Download Luxembourg as sample if no data is provided
-    if [ ! -f /data/region.osm.pbf ] && [ -z "${DOWNLOAD_PBF:-}" ]; then
-        echo "WARNING: No import file at /data/region.osm.pbf, so importing Luxembourg as example..."
-        DOWNLOAD_PBF="https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf"
-        DOWNLOAD_POLY="https://download.geofabrik.de/europe/luxembourg.poly"
-    fi
-
-    if [ -n "${DOWNLOAD_PBF:-}" ]; then
-        echo "INFO: Download PBF file: $DOWNLOAD_PBF"
-        wget ${WGET_ARGS:-} "$DOWNLOAD_PBF" -O /data/region.osm.pbf
-        if [ -n "${DOWNLOAD_POLY:-}" ]; then
-            echo "INFO: Download PBF-POLY file: $DOWNLOAD_POLY"
-            wget ${WGET_ARGS:-} "$DOWNLOAD_POLY" -O /data/region.poly
-        fi
+    if [ ! -f /data/region.osm ] && [ -z "${DOWNLOAD_PBF:-}" ]; then
+			  echo "Nothing to import..."
+				exit 1
     fi
 
     if [ "${UPDATES:-}" == "enabled" ] || [ "${UPDATES:-}" == "1" ]; then
         # determine and set osmosis_replication_timestamp (for consecutive updates)
-        REPLICATION_TIMESTAMP=`osmium fileinfo -g header.option.osmosis_replication_timestamp /data/region.osm.pbf`
+        REPLICATION_TIMESTAMP=`osmium fileinfo -g header.option.osmosis_replication_timestamp /data/region.osm`
 
         # initial setup of osmosis workspace (for consecutive updates)
         sudo -E -u renderer openstreetmap-tiles-update-expire.sh $REPLICATION_TIMESTAMP
@@ -100,7 +89,7 @@ if [ "$1" == "import" ]; then
       --tag-transform-script /data/style/${NAME_LUA:-openstreetmap-carto.lua}  \
       --number-processes ${THREADS:-4}  \
       -S /data/style/${NAME_STYLE:-openstreetmap-carto.style}  \
-      /data/region.osm.pbf  \
+      /data/region.osm  \
       ${OSM2PGSQL_EXTRA_ARGS:-}  \
     ;
 
@@ -116,10 +105,10 @@ if [ "$1" == "import" ]; then
     fi
 
     #Import external data
-    chown -R renderer: /home/renderer/src/ /data/style/
-    if [ -f /data/style/scripts/get-external-data.py ] && [ -f /data/style/external-data.yml ]; then
-        sudo -E -u renderer python3 /data/style/scripts/get-external-data.py -c /data/style/external-data.yml -D /data/style/data
-    fi
+#    chown -R renderer: /home/renderer/src/ /data/style/
+#    if [ -f /data/style/scripts/get-external-data.py ] && [ -f /data/style/external-data.yml ]; then
+#        sudo -E -u renderer python3 /data/style/scripts/get-external-data.py -c /data/style/external-data.yml -D /data/style/data
+#    fi
 
     # Register that data has changed for mod_tile caching purposes
     sudo -u renderer touch /data/database/planet-import-complete
@@ -186,9 +175,23 @@ if [ "$1" == "run" ]; then
     }
     trap stop_handler SIGTERM
 
-    sudo -u renderer renderd -f -c /etc/renderd.conf &
+    sudo -u renderer tirex-backend-manager -f &
+    sudo -u renderer tirex-master -d -f &
     child=$!
     wait "$child"
+
+		# Terminate the tirex processes
+    PID=`ps -eaf | grep tirex-master | grep -v grep | awk '{print $2}'`
+    if [[ "" !=  "$PID" ]]; then
+      echo "send SIGTERM to tirex-master PID=$PID"
+      kill -n 15 $PID
+    fi
+
+    PID=`ps -eaf | grep tirex-backend-manager | grep -v grep | awk '{print $2}'`
+    if [[ "" !=  "$PID" ]]; then
+      echo "send SIGTERM to tirex-backend-manager PID=$PID"
+      kill -n 15 $PID
+    fi
 
     service postgresql stop
 

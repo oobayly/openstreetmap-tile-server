@@ -82,12 +82,14 @@ RUN apt-get update \
  python3-pip \
  renderd \
  sudo \
+ tirex \
  vim \
 && apt-get clean autoclean \
 && apt-get autoremove --yes \
 && rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 RUN adduser --disabled-password --gecos "" renderer
+
 
 # Get Noto Emoji Regular font, despite it being deprecated by Google
 RUN wget https://github.com/googlefonts/noto-emoji/blob/9a5261d871451f9b5183c93483cbd68ed916b1e9/fonts/NotoEmoji-Regular.ttf?raw=true --content-disposition -P /usr/share/fonts/
@@ -112,12 +114,9 @@ COPY apache.conf /etc/apache2/sites-available/000-default.conf
 RUN ln -sf /dev/stdout /var/log/apache2/access.log \
 && ln -sf /dev/stderr /var/log/apache2/error.log
 
-# leaflet
+# leaflet-demo
+RUN rm -Rf /var/www/html/*
 COPY leaflet-demo.html /var/www/html/index.html
-RUN cd /var/www/html/ \
-&& wget https://github.com/Leaflet/Leaflet/releases/download/v1.8.0/leaflet.zip \
-&& unzip leaflet.zip \
-&& rm leaflet.zip
 
 # Icon
 RUN wget -O /var/www/html/favicon.ico https://www.openstreetmap.org/favicon.ico
@@ -151,21 +150,47 @@ RUN mkdir -p /run/renderd/ \
   &&  ln  -s  /data/database/postgres  /var/lib/postgresql/$PG_VERSION/main             \
   &&  ln  -s  /data/style              /home/renderer/src/openstreetmap-carto  \
   &&  ln  -s  /data/tiles              /var/cache/renderd/tiles                \
+  &&  chmod 775 /data/tiles \
 ;
-
-RUN echo '[default] \n\
-URI=/tile/ \n\
-TILEDIR=/var/cache/renderd/tiles \n\
-XML=/home/renderer/src/openstreetmap-carto/mapnik.xml \n\
-HOST=localhost \n\
-TILESIZE=256 \n\
-MAXZOOM=20' >> /etc/renderd.conf \
- && sed -i 's,/usr/share/fonts/truetype,/usr/share/fonts,g' /etc/renderd.conf
 
 # Install helper script
 COPY --from=compiler-helper-script /home/renderer/src/regional /home/renderer/src/regional
 
 COPY --from=compiler-stylesheet /root/openstreetmap-carto /home/renderer/src/openstreetmap-carto-backup
+
+# Copy tirex configuration
+RUN mkdir -p /etc/tirex/renderer/openseamap
+COPY openseamap.conf /etc/tirex/renderer/openseamap.conf
+COPY openseamap-renderer.conf /etc/tirex/renderer/openseamap/openseamap.conf
+COPY tirex.conf /etc/tirex/tirex.conf
+
+# Link tirex to /data/tiles too
+RUN  rm -Rf /var/cache/tirex/tiles \
+  && ln -s /data/tiles /var/cache/tirex/tiles
+
+# tirex will be run as the renderer user
+# but we're not using systemd
+RUN  mkdir -p /var/run/tirex \
+  && chown renderer:renderer /var/cache/tirex \
+  && chown renderer:renderer /var/cache/tirex/stats \
+  && chown renderer:renderer /var/run/tirex \
+  && chown renderer:renderer /var/log/tirex \
+  && sed -i 's/_tirex/renderer/g' /usr/lib/systemd/system/tirex-master.service \
+  && sed -i 's/_tirex/renderer/g' /usr/lib/systemd/system/tirex-backend-manager.service
+
+# Remove unrequired tirex sample renderer and maps
+RUN  rm -fr /etc/tirex/renderer/mapnik.conf \
+  && rm -fr /etc/tirex/renderer/wms \
+	&& rm -fr /etc/tirex/renderer/mapserver \
+	&& rm -fr /etc/tirex/renderer/test \
+	&& rm -fr /etc/tirex/renderer/wms.conf \
+	&& rm -fr /etc/tirex/renderer/mapserver.conf \
+	&& rm -fr /etc/tirex/renderer/test.conf
+
+RUN  mkdir -p /srv/jrenderpgsql/
+COPY tirex-backend-openseamap /usr/libexec/tirex-backend-openseamap
+COPY jrenderpgsql.jar /srv/jrenderpgsql/jrenderpgsql.jar
+RUN chown renderer: /srv/jrenderpgsql/jrenderpgsql.jar
 
 # Start running
 COPY run.sh /
