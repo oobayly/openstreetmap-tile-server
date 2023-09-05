@@ -9,7 +9,7 @@ ENV SEACHART_BRANCH=seachart-jrender
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
       ca-certificates gnupg lsb-release locales \
-      wget \
+      wget curl vim \
       git-core unzip unrar \
       openjdk-${JDK_VERSION}-jdk-headless \
       libpostgis-java
@@ -40,4 +40,6 @@ RUN mkdir -p /src \
 
 WORKDIR /
 COPY build.sh /
+RUN  mkdir -p /build \
+  && chmod +x /build.sh
 
