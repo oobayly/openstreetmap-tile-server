@@ -190,7 +190,8 @@ RUN  rm -fr /etc/tirex/renderer/mapnik.conf \
 RUN  mkdir -p /srv/jrenderpgsql/
 COPY tirex-backend-openseamap /usr/libexec/tirex-backend-openseamap
 COPY jrenderpgsql.jar /srv/jrenderpgsql/jrenderpgsql.jar
-RUN chown renderer: /srv/jrenderpgsql/jrenderpgsql.jar
+RUN  chmod +x /usr/libexec/tirex-backend-openseamap \
+  && chown renderer: /srv/jrenderpgsql/jrenderpgsql.jar
 
 # Start running
 COPY run.sh /
