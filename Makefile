@@ -1,4 +1,4 @@
-.PHONY: build push test
+.PHONY: jrender build push test
 
 DOCKER_IMAGE=oobayly/openseamap-tile-server
 
