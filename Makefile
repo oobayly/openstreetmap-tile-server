@@ -2,7 +2,7 @@
 
 DOCKER_IMAGE=oobayly/openseamap-tile-server
 
-build-jrender:
+jrender:
 	make -C jrender build
 
 build:
