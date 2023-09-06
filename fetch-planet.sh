@@ -4,6 +4,7 @@
 
 OVERPASS="[timeout:3600];("
 NEWER=
+TMP=$(tempfile -d /var/tmp/)
 
 if [ -n "$1" ]; then
 	NEWER="(newer:'$(date -d $1 +%FT%T.%2NZ)')"
@@ -19,6 +20,10 @@ done
 
 OVERPASS="${OVERPASS}\n);\nout meta;"
 
+echo "Querying OverPass:"
 echo -e $OVERPASS
-echo -e "${OVERPASS}" | curl -X POST --data @- "http://overpass-api.de/api/interpreter" > osm-data/seamarks_planet.osm
+
+echo -e "${OVERPASS}" | curl -X POST --data @- "http://overpass-api.de/api/interpreter" > "$TMP"
+
+mv "$TMP" osm-data/seamarks_planet.osm
 

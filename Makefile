@@ -2,7 +2,8 @@
 
 DOCKER_IMAGE=oobayly/openseamap-tile-server
 
-
+build-jrender:
+	make -C jrender build
 
 build:
 	docker build -t ${DOCKER_IMAGE} .
@@ -15,7 +16,11 @@ test:build
 	docker run --rm -v osm-data:/data/database/ ${DOCKER_IMAGE} import
 	docker run --rm -v osm-data:/data/database/ -p 8080:80 -d ${DOCKER_IMAGE} run
 
+fetch-planet:
+	./fetch-planet.sh
+
 import:# build
+	docker volume rm -f osm-data
 	docker run \
 	--rm \
 	-v $(shell pwd)/osm-data/seamarks_planet.osm:/data/region.osm \
