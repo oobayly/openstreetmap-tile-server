@@ -39,5 +39,8 @@ serve:# build
 	-d ${DOCKER_IMAGE} \
 	run
 
+console:
+	docker exec -it `docker ps | grep '${DOCKER_IMAGE}' | awk '{ print $$1 }'` bash
+
 stop:
 	docker rm -f `docker ps | grep '${DOCKER_IMAGE}' | awk '{ print $$1 }'` || true
