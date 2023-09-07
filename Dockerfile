@@ -137,13 +137,11 @@ RUN chown -R postgres:postgres /var/lib/postgresql \
 && echo "host all all ::/0 scram-sha-256" >> /etc/postgresql/$PG_VERSION/main/pg_hba.conf
 
 # Create volume directories
-RUN mkdir -p /run/renderd/ \
-  &&  mkdir  -p  /data/database/  \
+RUN   mkdir  -p  /data/database/  \
   &&  mkdir  -p  /data/style/  \
   &&  mkdir  -p  /home/renderer/src/  \
   &&  chown  -R  renderer:  /data/  \
   &&  chown  -R  renderer:  /home/renderer/src/  \
-  &&  chown  -R  renderer:  /run/renderd  \
   &&  mv  /var/lib/postgresql/$PG_VERSION/main/  /data/database/postgres/  \
   &&  mv  /var/cache/renderd/tiles/            /data/tiles/     \
   &&  chown  -R  renderer: /data/tiles \
@@ -175,8 +173,9 @@ RUN  mkdir -p /var/run/tirex \
   && chown renderer:renderer /var/cache/tirex/stats \
   && chown renderer:renderer /var/run/tirex \
   && chown renderer:renderer /var/log/tirex \
-  && sed -i 's/_tirex/renderer/g' /usr/lib/systemd/system/tirex-master.service \
-  && sed -i 's/_tirex/renderer/g' /usr/lib/systemd/system/tirex-backend-manager.service
+#  && sed -i 's/_tirex/renderer/g' /usr/lib/systemd/system/tirex-master.service \
+#  && sed -i 's/_tirex/renderer/g' /usr/lib/systemd/system/tirex-backend-manager.service \
+;
 
 # Remove unrequired tirex sample renderer and maps
 RUN  rm -fr /etc/tirex/renderer/mapnik.conf \
