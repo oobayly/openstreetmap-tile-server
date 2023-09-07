@@ -5,7 +5,7 @@ This is a modified fork of [Overv/openstreetmap-tile-server](https://github.com/
 ## Changes made:
 - Only imports nodes, ways and relations that contain the `seamark:type` tag. These are fetched using the overpass API
 - Uses [tirex](https://github.com/openstreetmap/tirex) instead of renderd so the OpenSeaMap backend can be used
-- Users a modified version of [jrenderpgsql.jar](https://github.com/oobayly/josm-plugins.git/) that will actually build, and that will generate valid XML (#23157 [patch] Fix jrenderpgsql build errors)[https://josm.openstreetmap.de/ticket/23157]
+- Users a modified version of [jrenderpgsql.jar](https://github.com/oobayly/josm-plugins.git/) that will actually build, and that will generate valid XML [#23157 [patch] Fix jrenderpgsql build errors](https://josm.openstreetmap.de/ticket/23157)
 
 ## Build instructions
 
