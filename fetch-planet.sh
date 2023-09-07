@@ -25,5 +25,6 @@ echo -e $OVERPASS
 
 echo -e "${OVERPASS}" | curl -X POST --data @- "http://overpass-api.de/api/interpreter" > "$TMP"
 
+mkdir -p osm-data
 mv "$TMP" osm-data/seamarks_planet.osm
 
