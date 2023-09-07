@@ -48,7 +48,7 @@ Or as a background process
 docker-compose up -d map
 ```
 
-The map will be available at [localhost:8080](http://localhost:8080/) 
+The map will be available at [localhost:8080](http://localhost:8080/)
 
 ## Optional commands
 
@@ -57,7 +57,8 @@ View the tirex master status
 docker exec -it openseamap-tile-server tirex-status
 ```
 
-Prerender tiles
+Prerender tiles. you can pass any arguments as specified by [tirex-batch](https://wiki.openstreetmap.org/wiki/Tirex/Commands/tirex-batch), except the `map` INIT value, which is added automatically
 ```bash
-docker exec -it openseamap-tile-server /pre-render.sh 7
+# Ireland, Zoom Level 7 to 8, Get counts only
+docker exec -it openseamap-tile-server /pre-render.sh --count-only z=7-8 bbox=-9.97708574059,51.6693012559,-6.03298539878,55.1316222195
 ```

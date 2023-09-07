@@ -1,11 +1,20 @@
 #!/bin/bash
 
-ZL=7,8
+ARGS=($@)
+HAS_COUNT=0
 
-if [ -n "$1" ]; then
-  ZL=$1
+for p in "${ARGS[@]}"; do
+  if [ "$p" == "--count-only" ]; then
+    HAS_COUNT=1
+  fi
+done
+
+sudo -u renderer tirex-batch $@ map=seamark
+SUCCESS=$?
+
+if [ $SUCCESS -ne 0 ] || [ $HAS_COUNT -eq 1 ]; then
+  exit 0;
 fi
 
-sudo -u renderer tirex-batch map=seamark z=$ZL bbox=-180,-90,180,90
 tirex-status
 
