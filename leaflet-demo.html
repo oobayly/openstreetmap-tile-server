@@ -1,117 +1,154 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>OpenSeaMap Tile Server</title>
 
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+    <title>OpenSeaMap Tile Server</title>
 
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css" integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ==" crossorigin=""/>
-        <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js" integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw==" crossorigin=""></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <style>
-            html, body, #map {
-                width: 100%;
-                height: 100%;
-                margin: 0;
-                padding: 0;
-            }
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css"
+        integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
+        crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"
+        integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw=="
+        crossorigin=""></script>
 
-            .debug-overlay {
-                box-sizing: border-box;
-                padding: 5px;
-                outline: 1px solid rgba(0, 0, 0, .25);
-                color: rgba(0, 0, 0, .5);
-                font-weight: bold;
-                font-size: 14pt;
-            }
-            .debug-overlay.debug-overlay-hidden {
-                display: none;
-            }
-        </style>
-    </head>
+    <style>
+        html,
+        body,
+        #map {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
 
-    <body>
-        <div id="map"></div>
+        .debug-overlay {
+            box-sizing: border-box;
+            padding: 5px;
+            outline: 1px solid rgba(0, 0, 0, .25);
+            color: rgba(0, 0, 0, .5);
+            font-weight: bold;
+            font-size: 14pt;
+        }
+    </style>
+</head>
 
-        <script>
-            const map = L.map('map').setView([0, 0], 2);
-            let showDebug = false;
+<body>
+    <div id="map"></div>
 
-            const updateDebug = () => {
-                const debugTiles = document.getElementsByClassName("debug-overlay");
-
-                for (tile of debugTiles) {
-                    if (showDebug) {
-                        tile.classList.remove("debug-overlay-hidden");
-                    } else {
-                        tile.classList.add("debug-overlay-hidden");
-                    }
-                }
-            };
-
-            L.Control.DebugControl = L.Control.extend({
-                onAdd: (map) => {
-                    const bar = document.createElement("div");
-                    const button = document.createElement("a");
-
-                    bar.classList.add("leaflet-bar");
-                    bar.append(button);
-
-                    button.innerText = "Dbg";
-                    button.href = "#";
-                    button.setAttribute("role", "button");
-
-                    L.DomEvent.disableClickPropagation(button);
-                    L.DomEvent.on(button, "click", (e) => {
-                        showDebug = !showDebug;
-                        updateDebug();
-                    });
-
-                    return bar;
-                },
-                onRemove: (map) => {},
-            });
-
-            L.Control.debugControl = (opts) => {
-                return new L.Control.DebugControl(opts);
-            };
-
-            L.GridLayer.GridDebug = L.GridLayer.extend({
-              createTile: function (coords) {
+    <script>
+        // Tile overlay
+        L.GridLayer.GridDebug = L.GridLayer.extend({
+            createTile: function (coords) {
                 const tile = document.createElement('div');
 
                 tile.classList.add("debug-overlay");
                 tile.innerHTML = [coords.z, coords.x, coords.y].join('/');
 
-                if (!showDebug) {
-                    tile.classList.add("debug-overlay-hidden");
-                }
-
                 return tile;
-              },
-            });
+            },
+        });
 
-            L.gridLayer.gridDebug = function (opts) {
-              return new L.GridLayer.GridDebug(opts);
+        // Base layers
+        const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+            id: 'base'
+        });
+        const otm = L.tileLayer('https://tile.opentopomap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+            id: 'base'
+        });
+
+        const baseMaps = {
+            "OpenStreetMap": osm,
+            "OpenTopoMap": otm,
+        };
+
+        // Optional layers
+        const openSeaMap = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+            minZoom: 7,
+            maxZoom: 18,
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+            id: 'base'
+        });
+        const openSeaMapLocal = L.tileLayer('./{z}/{x}/{y}.png', {
+            minZoom: 7,
+            maxZoom: 18,
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+            id: 'base'
+        });
+        const grid = new L.GridLayer.GridDebug();
+
+        const overlayMaps = {
+            "OpenSeaMap Official (1)": openSeaMap,
+            "OpenSeaMap Local (2)": openSeaMapLocal,
+            "Grid (3)": grid,
+        }
+
+        const mapOptions = {
+            center: [0, 0],
+            zoom: 2,
+            layers: [osm, grid, openSeaMapLocal]
+        }
+
+        // Load the previous map view
+        try {
+            const params = JSON.parse(localStorage.getItem("MapSettings"));
+
+            if (params?.center) {
+                if (typeof params.center.lat === "number" && typeof params.center.lng === "number") {
+                    mapOptions.center = params.center;
+                }
+            }
+            if (typeof params?.zoom === "number") {
+                mapOptions.zoom = params.zoom;
+            }
+        } catch { }
+
+        const map = L.map('map', mapOptions);
+        const layerControl = L.control.layers(
+            baseMaps,
+            overlayMaps,
+            {
+                collapsed: false,
+            }
+        ).addTo(map);
+
+        // Listen for the moveend event so the view can be saved
+        map.addEventListener("moveend", (e) => {
+            const params = {
+                center: map.getCenter(),
+                zoom: map.getZoom(),
             };
 
-            L.Control.debugControl({position: "topright"}).addTo(map);
+            localStorage.setItem("MapSettings", JSON.stringify(params));
+        });
 
-            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 18,
-                attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
-                id: 'base'
-            }).addTo(map);
-            L.tileLayer('./seamark/{z}/{x}/{y}.png', {
-                minZoom: 7,
-                maxZoom: 18,
-                attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
-                id: 'base'
-            }).addTo(map);
+        // Use numbers to select the overlays
+        window.addEventListener("keyup", (e) => {
+            const index = e.keyCode - 49;
 
+            if (index < 0) {
+                return;
+            }
 
-            map.addLayer(L.gridLayer.gridDebug());
-        </script>
-    </body>
+            const overlay = Object.values(overlayMaps)[index];
+
+            if (!overlay) {
+                return;
+            }
+
+            if (map.hasLayer(overlay)) {
+                map.removeLayer(overlay);
+            } else {
+                map.addLayer(overlay);
+            }
+        })
+    </script>
+</body>
+
 </html>
