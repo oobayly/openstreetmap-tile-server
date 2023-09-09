@@ -5,17 +5,20 @@ This is a modified fork of [Overv/openstreetmap-tile-server](https://github.com/
 ## Changes made
 - Only imports nodes, ways and relations that contain the `seamark:type` tag. These are fetched using the overpass API
 - Uses [tirex](https://github.com/openstreetmap/tirex) instead of renderd so the OpenSeaMap backend can be used
-- Users a modified version of [jrenderpgsql.jar](https://github.com/oobayly/josm-plugins.git/) that will actually build, and that will generate valid XML [#23157 [patch] Fix jrenderpgsql build errors](https://josm.openstreetmap.de/ticket/23157)
+- Uses a modified version of [jrenderpgsql.jar](https://github.com/oobayly/josm-plugins.git/) that will actually build, and that will generate valid XML [#23157 [patch] Fix jrenderpgsql build errors](https://josm.openstreetmap.de/ticket/23157)
 
 ## TODO
 - Reduce reliance on mapnik in order to reduce Docker image size and complexity
 - Implement automatic updates
+- Provide docker image
+
+## Prerequisites
+At the very least, you'll need Make, Docker and Docker-Compose installed on your system. On Windows systems, you'll need to follow the [instructions](https://docs.docker.com/desktop/wsl/) on running Docker Desktop and WSL2.
 
 ## Build instructions
-
 The build process is fairly simple
 
-Fork the repo and checkout the openseamap branch
+Clone the repo and checkout the openseamap branch
 ```bash
 git clone https://github.com/oobayly/openstreetmap-tile-server.git
 cd openstreetmap-tile-server
@@ -27,7 +30,7 @@ Build the modified jrenderpgsql.jar file
 make jrender
 ```
 
-Fetch the seamark data from [OverPass](https://overpass-turbo.eu/). You may want to download a smaller extract at first for testing
+Fetch the seamark data from [OverPass](https://overpass-turbo.eu/). You may want to download a smaller extract at first for testing, although the the resulting OSM file is only ~600MB and takes about 5 minutes to download
 ```bash
 make fetch-planet
 ```
@@ -37,7 +40,7 @@ Build the docker image
 make build
 ```
 
-Import the seamark data. If you've downloaded a custom extract instead of the using the `fetch` recipe, the file should be available at `./osm-data/seamarks_planet.osm`
+Import the seamark data. If you've downloaded a custom extract instead of the using the `fetch` recipe, the file should be saved at `./osm-data/seamarks_planet.osm`
 ```bash
 make import
 ```
