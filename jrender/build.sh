@@ -2,7 +2,8 @@
 
 # Fetch newest
 cd /src/josm-plugins \
-	&& git pull
+	&& git pull \
+        && git log -n 1
 
 # Make jrender
 cd /src/josm-plugins/seachart/jrender \
